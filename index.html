@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="apple-touch-icon" href="https://i.ibb.co.com/8GNcwdG/Cardsales.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+  <script async src="https://docs.opencv.org/4.8.0/opencv.js" type="text/javascript"></script>
+
+  <style>
+    body { 
+      padding: 15px;
+      background-color: #222224; 
+      background-image: radial-gradient(#444 1px, transparent 1px);
+      background-size: 20px 20px;
+      font-family: 'Ubuntu', sans-serif;
+    }
+    .hidden { display: none !important; }
+    
+    h2, h4, h5 {
+      font-family: 'Press Start 2P', cursive;
+      color: #FFCC00;
+      text-shadow: 2px 2px 0 #3B4CCA, -2px -2px 0 #3B4CCA, 2px -2px 0 #3B4CCA, -2px 2px 0 #3B4CCA;
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    #formTitle { text-align: left; font-size: 1rem; }
+
+    .card { 
+      background: #FFFFFF; 
+      border: 4px solid #333; 
+      border-radius: 15px;
+      box-shadow: 4px 4px 0px #EE1515; 
+      padding: 15px; 
+      margin-bottom: 25px; 
+    }
+    .card-entry { 
+      background: #f8f9fa;
+      padding: 15px; 
+      border-radius: 10px; 
+      margin-bottom: 15px; 
+      border: 3px solid #ddd; 
+      box-shadow: 3px 3px 0px #ccc;
+    }
+
+    .form-control, .form-select {
+      border: 2px solid #aaa;
+      border-radius: 8px;
+      font-family: 'Ubuntu', sans-serif;
+      font-weight: bold;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #3B4CCA;
+      box-shadow: 0 0 0 0.25rem rgba(59, 76, 202, 0.25);
+    }
+
+    .btn {
+      font-weight: bold;
+      border-radius: 8px;
+      border: 3px solid #333;
+      box-shadow: 3px 3px 0px #333;
+      transition: all 0.1s;
+      text-transform: uppercase;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+    }
+    .btn:active { transform: translate(3px, 3px); box-shadow: 0px 0px 0px #333; }
+    
+    .btn-primary { background-color: #3B4CCA; color: white; } 
+    .btn-primary:hover { background-color: #2a3799; color: white; border-color: #333;}
+    .btn-success { background-color: #4DAD5B; color: white; } 
+    .btn-success:hover { background-color: #3b8a45; color: white; border-color: #333;}
+    .btn-danger { background-color: #EE1515; color: white; } 
+    .btn-danger:hover { background-color: #c91010; color: white; border-color: #333;}
+    .btn-warning { background-color: #FFCC00; color: #333; } 
+    .btn-warning:hover { background-color: #e6b800; color: #333; border-color: #333;}
+    .btn-info { background-color: #00A3E0; color: white; } 
+    .btn-info:hover { background-color: #0082b3; color: white; border-color: #333;}
+    .btn-secondary { background-color: #8c8c8c; color: white; } 
+    .btn-dark { background-color: #333; color: white; }
+    .btn-dark:hover { background-color: #111; color: white; border-color: #000;}
+    .btn-light { background-color: #f8f9fa; color: #333; }
+    .btn-light:hover { background-color: #e2e6ea; border-color: #333; }
+
+    .list-group-item {
+      border: 3px solid #333;
+      border-radius: 10px !important;
+      box-shadow: 3px 3px 0px #aaa;
+      padding: 12px;
+    }
+    .badge {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.55em;
+      padding: 8px 10px;
+      border: 2px solid #333;
+      box-shadow: 2px 2px 0px #333;
+      color: #fff;
+    }
+    .bg-success { background-color: #4DAD5B !important; color: white !important;} 
+    .bg-secondary { background-color: #8c8c8c !important; } 
+    .bg-dark { background-color: #333 !important; }
+
+    .bg-info.bg-opacity-10 { background-color: #e0f7fa !important; border-color: #00A3E0 !important; color: #004d66 !important; } 
+    .bg-success.bg-opacity-25 { background-color: #e8f5e9 !important; border-color: #4DAD5B !important; color: #145c24 !important; } 
+    .bg-light-muted { background-color: #e0e0e0 !important; opacity: 0.7; color: #333 !important; } 
+
+    .nav-tabs { border-bottom: none; margin-bottom: 20px; }
+    .nav-tabs .nav-link {
+      color: #fff;
+      background-color: #333;
+      border: 3px solid #333;
+      margin-right: 5px;
+      border-radius: 10px 10px 0 0;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.55em;
+      padding: 12px 10px;
+    }
+    .nav-tabs .nav-link.active {
+      background-color: #FFFFFF;
+      color: #333;
+      border-bottom-color: transparent;
+      box-shadow: 4px -4px 0px #EE1515;
+      transform: translateY(3px);
+    }
+
+    #welcomeMessage {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.8em;
+      color: #FFFFFF !important;
+      text-shadow: 2px 2px 0 #333;
+      margin-bottom: 15px !important;
+      text-align: left;
+    }
+    .text-success { color: #4DAD5B !important; text-shadow: 1px 1px 0 #333; font-weight: bold; }
+
+    @media (max-width: 576px) {
+      h2 { font-size: 1.1rem; }
+      h4, h5 { font-size: 1rem; }
+      .nav-tabs .nav-link { font-size: 0.45em; padding: 10px 6px; }
+      .list-group-item .btn { font-size: 0.75em; padding: 6px; } 
+    }
+  </style>
+</head>
+<body>
+
+<datalist id="cardNameSuggestions"></datalist>
+
+<div class="container" id="app">
+  <h2 class="mt-2">Pokemon Card Sales</h2>
+  
+  <div id="loginView" class="card p-4 mx-auto" style="max-width: 400px; margin-top: 50px;">
+    <h4>Login</h4>
+    <input type="text" id="username" class="form-control mb-3" placeholder="Username">
+    <input type="password" id="password" class="form-control mb-4" placeholder="Password" onkeydown="if(event.key === 'Enter') login()">
+    <button class="btn btn-primary w-100 py-2" onclick="login()">ENTER SYSTEM</button>
+    <div id="loginError" class="text-danger mt-3 fw-bold text-center"></div>
+  </div>
+
+  <div id="dashboardView" class="hidden">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 id="welcomeMessage" class="m-0"></h5>
+      <button class="btn btn-danger btn-sm" onclick="logout()">LOGOUT</button>
+    </div>
+
+    <ul class="nav nav-tabs hidden" id="adminTabs">
+      <li class="nav-item">
+        <button class="nav-link active" id="tabNewTx" onclick="switchAdminTab('newTx')">Add Trade</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tabReport" onclick="switchAdminTab('report')">Sales Report</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tabPrices" onclick="switchAdminTab('prices')">Price History</button>
+      </li>
+    </ul>
+
+    <div id="pricesPanel" class="hidden card p-3 mb-4">
+      <h5>Last Sold Prices</h5>
+      <div class="mt-2 mb-3">
+        <input type="text" id="priceSearch" class="form-control p-2" placeholder="🔍 Search card name across all pages..." onkeyup="filterPrices()">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-dark table-striped table-bordered text-center align-middle mb-0">
+          <thead>
+            <tr>
+              <th class="text-warning">Card Name</th>
+              <th class="text-warning">Last Price</th>
+              <th class="text-warning">Date</th>
+            </tr>
+          </thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-3 hidden" id="pricePaginationControls">
+        <button class="btn btn-dark btn-sm" onclick="changePricePage(-1)" id="btnPricePrev">◀ PREV</button>
+        <span class="text-white fw-bold small" style="background: #333; padding: 5px 10px; border-radius: 5px;" id="pricePageInfo">Page 1</span>
+        <button class="btn btn-dark btn-sm" onclick="changePricePage(1)" id="btnPriceNext">NEXT ▶</button>
+      </div>
+    </div>
+
+    <div id="reportPanel" class="hidden card p-3 mb-4">
+      <h5>Sales Report</h5>
+      <div class="row mb-3 g-2 align-items-end">
+        <div class="col-md-2 col-6">
+          <label class="form-label fw-bold small">Start Date</label>
+          <input type="date" id="reportStartDate" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2 col-6">
+          <label class="form-label fw-bold small">End Date</label>
+          <input type="date" id="reportEndDate" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">Customer</label>
+          <input type="text" id="reportCustomerSearch" class="form-control form-control-sm" placeholder="Optional...">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">Card Name</label>
+          <input type="text" id="reportCardSearch" class="form-control form-control-sm" placeholder="Optional...">
+        </div>
+        <div class="col-md-2 col-12">
+          <button class="btn btn-primary btn-sm w-100 h-100" style="min-height: 31px;" onclick="generateReport()">SEARCH</button>
+        </div>
+      </div>
+      <h3 class="text-success text-end mt-3 mb-4 border-bottom border-3 pb-3 border-dark">Total: Rp <span id="reportTotalDisplay">0</span></h3>
+      
+      <h6 class="fw-bold mb-3">Detailed Transactions:</h6>
+      <div id="reportList" class="row g-2"></div>
+      
+      <div class="d-flex justify-content-between align-items-center mt-3 hidden" id="reportPaginationControls">
+        <button class="btn btn-dark btn-sm" onclick="changeReportPage(-1)" id="btnReportPrev">◀ PREV</button>
+        <span class="text-white fw-bold small" style="background: #333; padding: 5px 10px; border-radius: 5px;" id="reportPageInfo">Page 1</span>
+        <button class="btn btn-dark btn-sm" onclick="changeReportPage(1)" id="btnReportNext">NEXT ▶</button>
+      </div>
+    </div>
+
+    <div id="adminPanel" class="hidden card p-3 mb-4">
+      <h5 id="formTitle">New Transaction</h5>
+      
+      <div class="row mb-3 g-2">
+        <div class="col-md-6 col-12">
+          <label class="fw-bold small">Date</label>
+          <input type="date" id="txDate" class="form-control">
+        </div>
+        <div class="col-md-6 col-12">
+          <label class="fw-bold small">Customer Name</label>
+          <input type="text" id="customerName" class="form-control" placeholder="Walk-in">
+        </div>
+      </div>
+      
+      <div class="row fw-bold mb-2 d-none d-md-flex text-secondary" style="font-size: 0.9em;">
+        <div class="col-3">Card Name</div>
+        <div class="col-2">Price (Rp)</div>
+        <div class="col-2">Qty</div>
+        <div class="col-2">Disc/Item</div>
+        <div class="col-2 text-end">Total (Rp)</div>
+        <div class="col-1"></div>
+      </div>
+      <button class="btn btn-dark btn-sm mb-3 fw-bold w-100 py-2" onclick="openScanner()">📷 MULTI-SCAN CARDS</button>
+
+<div id="scannerContainer" class="hidden mb-3 p-3 bg-dark rounded border border-secondary text-center">
+  
+  <div class="d-flex justify-content-between align-items-center text-white mb-2">
+    <span id="db-status" class="badge bg-danger border border-light">DB: LOADING</span>
+    <div>
+      <span id="queue-count" class="badge bg-secondary border border-light">Queue: 0</span>
+      <span id="match-count" class="badge bg-success border border-light">Matched: 0</span>
+    </div>
+  </div>
+
+  <div style="position: relative; width: 100%; max-height: 350px; overflow: hidden; border-radius: 8px;">
+    <video id="camera-stream" autoplay playsinline style="width: 100%; object-fit: contain;"></video>
+    <div style="position: absolute; top: 10%; left: 15%; width: 70%; height: 80%; border: 3px dashed #FFCC00; pointer-events: none;"></div>
+    
+    <div id="flash-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; transition: opacity 0.1s ease-out;"></div>
+  </div>
+  
+  <canvas id="snapshot-canvas" class="hidden"></canvas>
+  <div id="scan-status" class="text-warning fw-bold my-2 small">Align ONE card and tap Capture!</div>
+  
+  <div class="row g-2 mt-2">
+    <div class="col-8">
+      <button class="btn btn-warning w-100 fw-bold h-100 py-2" id="capture-btn" onclick="captureToQueue()" disabled>📸 CAPTURE</button>
+    </div>
+    <div class="col-4">
+      <button class="btn btn-success w-100 fw-bold h-100" id="done-btn" onclick="finishScanning()">✅ DONE</button>
+    </div>
+  </div>
+  <button class="btn btn-outline-danger btn-sm w-100 mt-2 fw-bold" onclick="closeScanner()">CANCEL</button>
+</div>
+      <div id="cardContainer"></div>
+      <button class="btn btn-info btn-sm mb-4 fw-bold w-100" onclick="addCardRow()">+ Add Pokemon Card</button>
+
+      <div class="row mb-3 bg-light p-3 rounded border align-items-end mx-0">
+        <div class="col-12 col-md-4 px-1">
+          <label class="fw-bold small">Global Discount</label>
+          <select id="discountType" class="form-select" onchange="calculateGrandTotal()">
+            <option value="none">None</option>
+            <option value="percent">% Off Subtotal</option>
+            <option value="amount">Amount Off (Rp)</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-4 mt-2 mt-md-0 px-1">
+          <label class="fw-bold small">Global Disc Value</label>
+          <input type="text" id="discountValue" class="form-control" value="0" oninput="formatInputRupiah(this); calculateGrandTotal()">
+        </div>
+        <div class="col-12 col-md-4 mt-2 mt-md-0 px-1">
+          <label class="fw-bold small">Remarks (Optional)</label>
+          <input type="text" id="discountRemarks" class="form-control" placeholder="e.g. VIP Member">
+        </div>
+      </div>
+
+      <h4 class="text-end mt-4 mb-4" style="text-shadow: none; color: #333; font-family: 'Ubuntu', sans-serif; font-weight: bold;">Grand Total: Rp <span id="grandTotalDisplay">0</span></h4>
+
+      <div class="mb-4">
+        <label class="fw-bold small">Upload Card Photo</label>
+        <input type="file" id="imageFile" accept="image/*" class="form-control p-2">
+      </div>
+
+      <button class="btn btn-success w-100 py-3 fs-6" onclick="submitTx()" id="submitBtn">SAVE RECORD</button>
+      <button class="btn btn-secondary w-100 mt-2 hidden" onclick="cancelEdit()" id="cancelEditBtn">CANCEL EDIT</button>
+    </div>
+
+    <div id="historyPanel" class="card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Trade History</h5>
+        <button class="btn btn-sm btn-warning fw-bold px-3 py-1" onclick="loadTransactions()">Refresh Data</button>
+      </div>
+      
+      <div class="row mb-3 g-2 align-items-end bg-light p-2 rounded border">
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small mb-0">From</label>
+          <input type="date" id="historyStartDate" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small mb-0">To</label>
+          <input type="date" id="historyEndDate" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3 col-12">
+          <label class="form-label fw-bold small mb-0">Status</label>
+          <select id="historyStatusFilter" class="form-select form-select-sm" onchange="onHistoryStatusChange()">
+            <option value="All">All Status</option>
+            <option value="Incomplete" selected>Incomplete</option>
+            <option value="Pending">Pending</option>
+            <option value="Deal">Deal</option>
+            <option value="Paid">Paid</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Void">Void</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-12">
+          <button class="btn btn-warning btn-sm w-100 h-100" style="min-height: 38px;" onclick="resetAndRenderTransactions()">FILTER</button>
+        </div>
+      </div>
+      
+      <div id="txList" class="row g-2"></div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3 hidden" id="paginationControls">
+        <button class="btn btn-dark btn-sm" onclick="changePage(-1)" id="btnPrev">◀ PREV</button>
+        <span class="text-white fw-bold small" style="background: #333; padding: 5px 10px; border-radius: 5px;" id="pageInfo">Page 1</span>
+        <button class="btn btn-dark btn-sm" onclick="changePage(1)" id="btnNext">NEXT ▶</button>
+      </div>
+    </div>
+  </div>
+</div>     
+
+<div id="txDetailModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1050; display: flex; align-items: center; justify-content: center; padding: 15px;">
+  <div class="card p-0 w-100" style="max-width: 450px; max-height: 90vh; overflow-y: auto; border: 4px solid #333; box-shadow: 4px 4px 0px #EE1515;">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3 border-bottom border-3 border-secondary">
+      <h6 class="m-0 fw-bold" style="font-family: 'Ubuntu', sans-serif;">Tx Details</h6>
+      <button class="btn btn-danger btn-sm fw-bold border border-white" onclick="closeModal()">X</button>
+    </div>
+    <div class="card-body p-3" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // REQUIRED: Paste your new Web App URL here
+  // ==========================================
+  const API_URL = "https://script.google.com/macros/s/AKfycbxXP80FvaDhbAMN8yVtvEOoove56OOsfK6cMYC0xvDl6xInrqgapLGi3fj3pqNfDOB1XQ/exec"; 
+
+  let currentUser = null;
+  let cards = [];
+  let allTransactions = [];
+  let editingTxId = null;
+  
+  let latestPrices = {}; 
+  
+  let historyCurrentPage = 1;
+  const historyItemsPerPage = 10;
+  
+  let reportCurrentPage = 1;
+  const reportItemsPerPage = 10;
+  let filteredReportTxs = [];
+
+  let priceCurrentPage = 1;
+  const priceItemsPerPage = 20;
+  let allPriceData = [];
+
+  const today = new Date();
+  const last31Days = new Date();
+  last31Days.setDate(today.getDate() - 31);
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 7);
+
+  document.getElementById('txDate').valueAsDate = today;
+  document.getElementById('reportStartDate').valueAsDate = last31Days; 
+  document.getElementById('reportEndDate').valueAsDate = today;
+  
+  document.getElementById('historyStatusFilter').value = 'Incomplete';
+  document.getElementById('historyStartDate').value = '';
+  document.getElementById('historyEndDate').value = '';
+
+  function formatRupiah(angka) {
+    if (angka === '' || angka === null || angka === undefined) return '';
+    let number_string = angka.toString().replace(/[^,\d]/g, '');
+    let split = number_string.split(',');
+    let sisa = split[0].length % 3;
+    let rupiah = split[0].substr(0, sisa);
+    let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+    if (ribuan) {
+      let separator = sisa ? '.' : '';
+      rupiah += separator + ribuan.join('.');
+    }
+    return split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+  }
+  function formatDateLocal(dateString) {
+    if (!dateString) return "No Date";
+    
+    // Parse the date (automatically applies your browser's local timezone, e.g., WIB)
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString.split('T')[0]; // Fallback just in case
+    
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function getRawNumber(str) {
+    if (!str) return '';
+    const val = parseInt(str.toString().replace(/\./g, ''));
+    return isNaN(val) ? '' : val;
+  }
+
+  function formatInputRupiah(element) { element.value = formatRupiah(element.value); }
+
+  function login() {
+    const btn = document.querySelector('#loginView .btn-primary');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = "AUTHENTICATING...";
+    }
+
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: "login", username: u, password: p })
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "ENTER SYSTEM";
+      }
+      
+      if (res.success) {
+        currentUser = res;
+        document.getElementById('loginView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+        document.getElementById('welcomeMessage').innerText = res.username;
+        
+        const userRole = String(res.role).trim().toLowerCase();
+   
+      if(userRole === 'admin') {
+      document.getElementById('adminPanel').classList.remove('hidden');
+      document.getElementById('adminTabs').classList.remove('hidden');
+      addCardRow();
+      loadOrbDatabase(); // <-- ADD THIS LINE
+}
+        loadTransactions();
+      } else {
+        document.getElementById('loginError').innerText = res.message;
+      }
+    })
+    .catch(err => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "ENTER SYSTEM";
+      }
+      document.getElementById('loginError').innerText = "Connection failed: " + (err.message || err);
+    });
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('txList').innerHTML = ''; 
+    document.getElementById('loginError').innerText = '';
+  }
+
+  function switchAdminTab(tab) {
+    document.getElementById('tabNewTx').classList.remove('active');
+    document.getElementById('tabReport').classList.remove('active');
+    document.getElementById('tabPrices').classList.remove('active');
+    document.getElementById('adminPanel').classList.add('hidden');
+    document.getElementById('reportPanel').classList.add('hidden');
+    document.getElementById('pricesPanel').classList.add('hidden');
+    document.getElementById('historyPanel').classList.add('hidden');
+    
+    if(tab === 'newTx') {
+      document.getElementById('tabNewTx').classList.add('active');
+      document.getElementById('adminPanel').classList.remove('hidden');
+      document.getElementById('historyPanel').classList.remove('hidden');
+    } else if(tab === 'report') {
+      document.getElementById('tabReport').classList.add('active');
+      document.getElementById('reportPanel').classList.remove('hidden');
+      generateReport();
+    } else if(tab === 'prices') {
+      document.getElementById('tabPrices').classList.add('active');
+      document.getElementById('pricesPanel').classList.remove('hidden');
+      document.getElementById('priceSearch').value = ''; 
+      generatePriceReport();
+    }
+  }
+
+  function buildPriceDictionaryAndSuggestions() {
+    latestPrices = {};
+    let uniqueCardNames = new Set();
+    
+    for (let i = allTransactions.length - 1; i >= 0; i--) {
+      const tx = allTransactions[i];
+      let details;
+      try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+      let items = Array.isArray(details) ? details : (details.items || []);
+      
+      items.forEach(item => {
+        if (item.name) {
+          const nameTrimmed = item.name.trim();
+          const nameLower = nameTrimmed.toLowerCase();
+          
+          uniqueCardNames.add(nameTrimmed);
+          
+          if (latestPrices[nameLower] === undefined && item.price !== undefined && tx.SalesStatus !== 'Void' && tx.SalesStatus !== 'Cancelled') {
+            latestPrices[nameLower] = item.price;
+          }
+        }
+      });
+    }
+    
+    const datalist = document.getElementById('cardNameSuggestions');
+    datalist.innerHTML = '';
+    Array.from(uniqueCardNames).sort().forEach(name => {
+      datalist.innerHTML += `<option value="${name}">`;
+    });
+  }
+
+  function addCardRow() {
+  // Fix: Generate a clean integer ID without decimals
+  const safeId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+  
+  const card = { id: safeId, name: '', price: '', qty: 1, itemDiscount: 0, total: 0 };
+  cards.push(card);
+  buildRowHTML(card);
+  calculateGrandTotal();
+}
+
+  function buildRowHTML(card) {
+    const container = document.getElementById('cardContainer');
+    const row = document.createElement('div');
+    row.className = "card-entry row g-2 align-items-center";
+    row.id = `row_${card.id}`;
+    
+    row.innerHTML = `
+      <div class="col-12 col-md-3">
+        <label class="d-md-none fw-bold small text-secondary">Card Name</label>
+        <input type="text" class="form-control" placeholder="Mewtwo ex..." value="${card.name}" list="cardNameSuggestions" oninput="updateCardData(${card.id}, 'name', this.value)">
+      </div>
+      <div class="col-4 col-md-2">
+        <label class="d-md-none fw-bold small text-secondary">Price (Rp)</label>
+        <input type="text" id="priceInput_${card.id}" class="form-control" placeholder="Price" value="${card.price === '' ? '' : formatRupiah(card.price)}" oninput="formatInputRupiah(this); updateCardData(${card.id}, 'price', this.value)">
+      </div>
+      <div class="col-4 col-md-2">
+        <label class="d-md-none fw-bold small text-secondary">Qty</label>
+        <input type="number" class="form-control" placeholder="Qty" value="${card.qty}" oninput="updateCardData(${card.id}, 'qty', this.value)">
+      </div>
+      <div class="col-4 col-md-2">
+        <label class="d-md-none fw-bold small text-secondary">Disc/Item</label>
+        <input type="text" class="form-control text-warning fw-bold" placeholder="Disc" value="${card.itemDiscount ? formatRupiah(card.itemDiscount) : ''}" oninput="formatInputRupiah(this); updateCardData(${card.id}, 'itemDiscount', this.value)">
+      </div>
+      <div class="col-8 col-md-2 fw-bold text-end mt-2 mt-md-0 align-self-center">
+        <label class="d-md-none fw-bold small text-secondary d-block">Total</label>
+        Rp <span id="total_${card.id}">${formatRupiah(card.total)}</span>
+      </div>
+      <div class="col-4 col-md-1 text-end mt-2 mt-md-0">
+        <button class="btn btn-danger btn-sm w-100" onclick="removeCard(${card.id})">X</button>
+      </div>
+    `;
+    container.appendChild(row);
+  }
+
+  function updateCardData(id, field, value) {
+    const card = cards.find(c => c.id === id);
+    if(field === 'price') {
+      card.price = value === '' ? '' : getRawNumber(value);
+    } else if (field === 'itemDiscount') {
+      card.itemDiscount = value === '' ? 0 : getRawNumber(value);
+    } else if(field === 'qty') {
+      card.qty = parseInt(value) || 0;
+    } else if(field === 'name') {
+      card.name = value;
+      
+      const nameLower = value.trim().toLowerCase();
+      if (latestPrices[nameLower] !== undefined) {
+        card.price = latestPrices[nameLower];
+        document.getElementById(`priceInput_${id}`).value = formatRupiah(card.price);
+      }
+    }
+    
+    let p = Number(card.price) || 0;
+    let d = Number(card.itemDiscount) || 0;
+    card.total = Math.max(0, p - d) * card.qty;
+    
+    document.getElementById(`total_${id}`).innerText = formatRupiah(card.total);
+    calculateGrandTotal();
+  }
+
+  function removeCard(id) {
+    cards = cards.filter(c => c.id !== id);
+    document.getElementById(`row_${id}`).remove();
+    calculateGrandTotal();
+  }
+
+  function calculateGrandTotal() {
+    let subtotal = cards.reduce((sum, c) => sum + c.total, 0);
+    const dType = document.getElementById('discountType').value;
+    const dVal = getRawNumber(document.getElementById('discountValue').value) || 0;
+    
+    let grand = subtotal;
+    if(dType === 'percent') grand -= (subtotal * (dVal / 100));
+    if(dType === 'amount') grand -= dVal;
+    
+    document.getElementById('grandTotalDisplay').innerText = formatRupiah(Math.max(0, grand));
+    return Math.max(0, grand);
+  }
+
+  function submitTx() {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerText = "SAVING...";
+    const fileInput = document.getElementById('imageFile');
+    
+    const payload = {
+      isUpdate: editingTxId !== null,
+      id: editingTxId,
+      date: document.getElementById('txDate').value,
+      customerName: document.getElementById('customerName').value,
+      adminName: currentUser.username,
+      cards: cards,
+      discountType: document.getElementById('discountType').value,
+      discountValue: getRawNumber(document.getElementById('discountValue').value) || 0,
+      discountRemarks: document.getElementById('discountRemarks').value,
+      grandTotal: calculateGrandTotal(),
+      imageBase64: null
+    };
+
+    if (fileInput.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        payload.imageBase64 = e.target.result;
+        sendToGAS(payload);
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    } else {
+      sendToGAS(payload);
+    }
+  }
+
+  function sendToGAS(payload) {
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: "submitTransaction", data: payload })
+    })
+    .then(res => res.json())
+    .then(res => {
+      alert(editingTxId ? "TRADE UPDATED!" : "TRADE SAVED!");
+      document.getElementById('submitBtn').innerText = "SAVE RECORD";
+      cancelEdit(); 
+      loadTransactions();
+    })
+    .catch(err => {
+      alert("Save failed: " + (err.message || err));
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').innerText = "SAVE RECORD";
+    });
+  }
+
+  function editTx(id) {
+    const tx = allTransactions.find(t => t.ID === id);
+    if(!tx) return;
+    
+    editingTxId = id;
+    switchAdminTab('newTx');
+    
+    document.getElementById('formTitle').innerText = "EDIT TRADE: " + id;
+    document.getElementById('submitBtn').innerText = "UPDATE RECORD";
+    document.getElementById('cancelEditBtn').classList.remove('hidden');
+    document.getElementById('txDate').value = formatDateLocal(tx.Date);
+    
+    document.getElementById('cardContainer').innerHTML = '';
+    cards = [];
+    
+    let details;
+    try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+    
+    if(Array.isArray(details)) {
+      cards = details;
+      document.getElementById('discountType').value = 'none';
+      document.getElementById('discountValue').value = '0';
+      document.getElementById('discountRemarks').value = '';
+      document.getElementById('customerName').value = '';
+    } else {
+      cards = details.items || [];
+      document.getElementById('discountType').value = details.discountType || 'none';
+      document.getElementById('discountValue').value = formatRupiah(details.discountValue || 0);
+      document.getElementById('discountRemarks').value = details.discountRemarks || '';
+      document.getElementById('customerName').value = details.customerName || '';
+    }
+
+    cards.forEach(c => {
+      if(!c.id) c.id = Date.now() + Math.random();
+      c.itemDiscount = c.itemDiscount || 0; 
+      buildRowHTML(c);
+    });
+    calculateGrandTotal();
+  }
+
+  function cancelEdit() {
+    editingTxId = null;
+    document.getElementById('formTitle').innerText = "New Transaction";
+    document.getElementById('submitBtn').innerText = "SAVE RECORD";
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('cancelEditBtn').classList.add('hidden');
+    
+    // NEW: Reset the date to today!
+    document.getElementById('txDate').valueAsDate = new Date();
+    
+    document.getElementById('imageFile').value = ''; 
+    document.getElementById('customerName').value = '';
+    
+    document.getElementById('cardContainer').innerHTML = '';
+    document.getElementById('discountType').value = 'none';
+    document.getElementById('discountValue').value = '0';
+    document.getElementById('discountRemarks').value = '';
+    cards = [];
+    addCardRow();
+  }
+
+  function onHistoryStatusChange() {
+    const status = document.getElementById('historyStatusFilter').value;
+    if (status === 'Incomplete') {
+      document.getElementById('historyStartDate').value = '';
+      document.getElementById('historyEndDate').value = '';
+    } else {
+      if (!document.getElementById('historyStartDate').value) {
+        document.getElementById('historyStartDate').valueAsDate = lastWeek;
+        document.getElementById('historyEndDate').valueAsDate = today;
+      }
+    }
+  }
+
+  function loadTransactions() {
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: "getTransactions" })
+    })
+    .then(res => res.json())
+    .then(responseString => {
+      if (!responseString) return; 
+      
+      const parsedData = typeof responseString === 'string' ? JSON.parse(responseString) : responseString;
+      allTransactions = parsedData; 
+      
+      buildPriceDictionaryAndSuggestions(); 
+      resetAndRenderTransactions(); 
+    })
+    .catch(err => {
+      alert("Failed to load history: " + (err.message || err));
+    });
+  }
+
+  function resetAndRenderTransactions() {
+    historyCurrentPage = 1;
+    renderTransactions();
+  }
+
+  function changePage(delta) {
+    historyCurrentPage += delta;
+    renderTransactions();
+  }
+
+  function renderTransactions() {
+    const list = document.getElementById('txList');
+    list.innerHTML = '';
+    
+    const startStr = document.getElementById('historyStartDate').value;
+    const endStr = document.getElementById('historyEndDate').value;
+    const statusFilter = document.getElementById('historyStatusFilter').value; 
+    
+    let filteredTxs = allTransactions;
+    if (statusFilter === 'Incomplete') {
+      // Excludes Confirmed and Cancelled from the Incomplete view
+      filteredTxs = filteredTxs.filter(tx => tx.SalesStatus !== 'Confirmed' && tx.SalesStatus !== 'Cancelled');
+    } else if (statusFilter !== 'All') {
+      filteredTxs = filteredTxs.filter(tx => tx.SalesStatus === statusFilter);
+    }
+    
+    if(startStr && endStr) {
+      const start = new Date(startStr);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endStr); end.setHours(23, 59, 59, 999);
+      filteredTxs = filteredTxs.filter(tx => {
+        const txDate = new Date(tx.Date);
+        return txDate >= start && txDate <= end;
+      });
+    }
+
+    filteredTxs = filteredTxs.slice().reverse();
+
+    const totalPages = Math.ceil(filteredTxs.length / historyItemsPerPage) || 1;
+    if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+    if (historyCurrentPage < 1) historyCurrentPage = 1;
+
+    document.getElementById('pageInfo').innerText = `Page ${historyCurrentPage} of ${totalPages}`;
+    document.getElementById('btnPrev').disabled = historyCurrentPage === 1;
+    document.getElementById('btnNext').disabled = historyCurrentPage === totalPages;
+    
+    const paginationControls = document.getElementById('paginationControls');
+    if(filteredTxs.length > 0) {
+      paginationControls.classList.remove('hidden');
+      paginationControls.classList.add('d-flex');
+    } else {
+      paginationControls.classList.add('hidden');
+      paginationControls.classList.remove('d-flex');
+      list.innerHTML = `<div class="col-12 text-center p-4 text-muted fw-bold">No transactions found matching this filter.</div>`;
+      return;
+    }
+
+    const startIndex = (historyCurrentPage - 1) * historyItemsPerPage;
+    const paginatedTxs = filteredTxs.slice(startIndex, startIndex + historyItemsPerPage);
+    const userRole = String(currentUser.role).trim().toLowerCase();
+
+    paginatedTxs.forEach(tx => {
+      const isLocked = tx.AdminConfirmed === true;
+      let actions = '';
+      
+      const copyButtonsHtml = `
+        <button class="btn btn-sm btn-dark w-100 mt-2 mb-1" onclick="copySummary('${tx.ID}', false)">📋 Copy Summary</button>
+        <button class="btn btn-sm btn-light w-100" onclick="copySummary('${tx.ID}', true)">📷 Copy with IMG</button>
+      `;
+
+      if (userRole === 'admin') {
+        actions = `
+          <div class="mt-auto pt-2">
+            <div class="d-flex flex-wrap gap-1">
+              <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="editTx('${tx.ID}')">Edit</button>
+              <button class="btn btn-sm btn-info flex-grow-1" onclick="setStatus('${tx.ID}', 'Deal', 'Admin')">Deal</button>
+              <button class="btn btn-sm btn-success flex-grow-1" onclick="setStatus('${tx.ID}', 'Paid', 'Admin')">Paid</button>
+              <button class="btn btn-sm btn-warning flex-grow-1" onclick="setStatus('${tx.ID}', 'Confirmed', 'Admin')">Confirm</button>
+              <button class="btn btn-sm btn-secondary flex-grow-1" onclick="setStatus('${tx.ID}', 'Cancelled', 'Admin')">Cancel</button>
+              <button class="btn btn-sm btn-danger flex-grow-1" onclick="setStatus('${tx.ID}', 'Void', 'Admin')">Void</button>
+            </div>
+            ${copyButtonsHtml}
+          </div>
+        `;
+      } else if (userRole === 'sales') {
+        if(!isLocked) {
+          actions = `
+            <div class="mt-auto pt-2">
+              <div class="d-flex flex-wrap gap-1">
+                <button class="btn btn-sm btn-outline-info flex-grow-1" onclick="setStatus('${tx.ID}', 'Deal', 'Sales')">Mark Deal</button>
+                <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="setStatus('${tx.ID}', 'Paid', 'Sales')">Mark Paid</button>
+                <button class="btn btn-sm btn-outline-danger flex-grow-1" onclick="setStatus('${tx.ID}', 'Cancelled', 'Sales')">Mark Cancelled</button>
+              </div>
+              ${copyButtonsHtml}
+            </div>
+          `;
+        } else {
+          actions = `<div class="mt-auto pt-2"><span class="badge bg-secondary px-3 py-2 w-100 mb-2">Locked by Admin</span>${copyButtonsHtml}</div>`;
+        }
+      }
+
+      let bgClass = "";
+      if(tx.SalesStatus === 'Void') bgClass = "bg-light-muted text-muted text-decoration-line-through";
+      if(tx.SalesStatus === 'Deal') bgClass = "bg-info bg-opacity-10";
+      if(tx.SalesStatus === 'Confirmed') bgClass = "bg-success bg-opacity-25";
+
+      let safeDate = "No Date";
+      if (tx.Date) { safeDate = formatDateLocal(tx.Date); }
+
+      let details;
+      try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+      let items = Array.isArray(details) ? details : (details.items || []);
+      
+      let custName = details.customerName ? details.customerName : 'Walk-in';
+      let cardListHtml = '<div class="my-2 p-2 flex-grow-1" style="background: #ffffff; border: 2px dashed #aaa; border-radius: 6px;">';
+      
+      if(items.length > 0) {
+        items.forEach(item => {
+          let discText = item.itemDiscount ? ` <span class="text-warning bg-dark px-1 rounded small">(Disc: ${formatRupiah(item.itemDiscount)})</span>` : '';
+          cardListHtml += `<div class="small fw-bold text-dark" style="font-family: 'Ubuntu', sans-serif;">▪ ${item.name} <span class="text-danger">(x${item.qty})</span>${discText}</div>`;
+        });
+      } else {
+        cardListHtml += `<div class="small text-muted">No items found</div>`;
+      }
+      cardListHtml += '</div>';
+
+      list.innerHTML += `
+        <div class="col-md-6 col-12 mb-2 d-flex">
+          <div class="list-group-item ${bgClass} w-100 d-flex flex-column h-100">
+            <div class="d-flex w-100 justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2">
+              <h6 class="mb-0 fw-bold text-truncate me-2" style="font-family: 'Ubuntu', sans-serif; font-size: 0.8rem;">Tx: ${tx.ID}</h6>
+              <span class="badge bg-dark">${safeDate}</span>
+            </div>
+            
+            <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+              <div>
+                <p class="mb-1 fw-bold fs-5">Rp ${formatRupiah(tx.GrandTotal || 0)}</p>
+                <p class="mb-1 small">Status: <strong class="text-uppercase border border-dark rounded px-2 bg-white">${tx.SalesStatus}</strong></p>
+                <p class="mb-1 small">Cust: <strong class="text-primary">${custName}</strong></p>
+              </div>
+              <div class="text-end">
+                ${tx.ImageURL ? `<a href="${tx.ImageURL}" target="_blank" class="btn btn-sm btn-primary py-1 px-2 mt-1">Photo</a>` : ''}
+              </div>
+            </div>
+            
+            ${cardListHtml}
+            ${actions}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function setStatus(id, status, role) {
+    if(status === 'Void') {
+      if(!confirm("Are you sure you want to VOID this transaction?")) return;
+    }
+
+    const tx = allTransactions.find(t => t.ID === id);
+    if (tx) {
+      tx.SalesStatus = status;
+      if (status === 'Confirmed' && String(role).trim().toLowerCase() === 'admin') {
+        tx.AdminConfirmed = true;
+      }
+      renderTransactions(); 
+    }
+
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: "updateStatus", id: id, status: status, role: role })
+    })
+    .then(res => res.json())
+    .then(res => {
+      if(res && res.success === false) {
+        alert("Error saving status: " + res.message);
+        loadTransactions(); 
+      }
+    })
+    .catch(err => {
+      alert("Connection lost. Status might not have saved.");
+      loadTransactions();
+    });
+  }
+
+  function copySummary(id, includeImage) {
+    const tx = allTransactions.find(t => t.ID === id);
+    if(!tx) return;
+    
+    let details;
+    try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+    
+    let items = [];
+    let discountType = 'none';
+    let discountValue = 0;
+    let remarksText = '';
+
+    if (Array.isArray(details)) {
+      items = details;
+    } else {
+      items = details.items || [];
+      discountType = details.discountType || 'none';
+      discountValue = Number(details.discountValue) || 0;
+      if (details.discountRemarks && details.discountRemarks.trim() !== '') {
+        remarksText = ` (${details.discountRemarks})`;
+      }
+    }
+
+    let text = ``;
+    let subtotal = 0;
+    
+    items.forEach(c => {
+      let price = Number(c.price) || 0;
+      let itemDisc = Number(c.itemDiscount) || 0;
+      
+      let effectivePrice = Math.max(0, price - itemDisc); 
+      let itemTotal = c.qty * effectivePrice; 
+      subtotal += itemTotal;
+      
+      text += `▪ ${c.name} ${c.qty} x Rp ${formatRupiah(effectivePrice)} = Rp ${formatRupiah(itemTotal)}\n`;
+    });
+    
+    let grandTotal = Number(tx.GrandTotal) || 0;
+
+    if (discountType !== 'none' && discountValue > 0) {
+      text += `*Subtotal: Rp ${formatRupiah(subtotal)}*\n`;
+      let discountAmount = 0;
+      if (discountType === 'percent') {
+        discountAmount = subtotal * (discountValue / 100);
+        text += `*Disc (${discountValue}%): - Rp ${formatRupiah(discountAmount)}${remarksText}*\n`;
+      } else if (discountType === 'amount') {
+        discountAmount = discountValue;
+        text += `*Disc: - Rp ${formatRupiah(discountAmount)}${remarksText}*\n`;
+      }
+      text += `*Total: Rp ${formatRupiah(grandTotal)}*\n`;
+    } else {
+      text += `*Total: Rp ${formatRupiah(grandTotal)}*\n`;
+    }
+
+    if (includeImage && tx.ImageURL) {
+      text += `\nImage Link: ${tx.ImageURL}`;
+    } else if (includeImage && !tx.ImageURL) {
+      alert("No image is attached to this transaction!");
+      return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert(includeImage ? "Summary with Image Link copied!" : "Summary copied! You can now paste it into WhatsApp.");
+    }).catch(err => {
+      alert("Failed to copy. Your browser might block clipboard access.");
+    });
+  }
+
+  function generateReport() {
+    const startStr = document.getElementById('reportStartDate').value;
+    const endStr = document.getElementById('reportEndDate').value;
+    const customerFilter = document.getElementById('reportCustomerSearch').value.toLowerCase().trim();
+    const cardFilter = document.getElementById('reportCardSearch').value.toLowerCase().trim(); // NEW
+
+    if(!startStr || !endStr) return;
+
+    const start = new Date(startStr); start.setHours(0, 0, 0, 0);
+    const end = new Date(endStr); end.setHours(23, 59, 59, 999); 
+
+    let totalSales = 0;
+    filteredReportTxs = [];
+    
+    allTransactions.forEach(tx => {
+      if(tx.SalesStatus === 'Paid' || tx.SalesStatus === 'Confirmed') {
+        const txDate = new Date(tx.Date);
+        if (txDate >= start && txDate <= end) {
+          
+          let details;
+          try { details = JSON.parse(tx.CardDetails); } catch(e) { details = {}; }
+          let custName = (details.customerName || 'walk-in').toLowerCase();
+          let items = Array.isArray(details) ? details : (details.items || []); // Parse items here
+
+          // Filter by Customer Name
+          if (customerFilter !== '' && !custName.includes(customerFilter)) {
+            return; 
+          }
+
+          // Filter by Card Name
+          if (cardFilter !== '') {
+            let hasCard = items.some(item => item.name && item.name.toLowerCase().includes(cardFilter));
+            if (!hasCard) return; 
+          }
+
+          totalSales += parseFloat(tx.GrandTotal) || 0;
+          filteredReportTxs.push(tx);
+        }
+      }
+    });
+    
+    document.getElementById('reportTotalDisplay').innerText = formatRupiah(totalSales);
+    filteredReportTxs.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+    
+    reportCurrentPage = 1;
+    renderReportPage();
+  }
+
+  function changeReportPage(delta) {
+    reportCurrentPage += delta;
+    renderReportPage();
+  }
+
+  function renderReportPage() {
+    const list = document.getElementById('reportList');
+    list.innerHTML = '';
+    
+    const totalPages = Math.ceil(filteredReportTxs.length / reportItemsPerPage) || 1;
+    if (reportCurrentPage > totalPages) reportCurrentPage = totalPages;
+    if (reportCurrentPage < 1) reportCurrentPage = 1;
+
+    document.getElementById('reportPageInfo').innerText = `Page ${reportCurrentPage} of ${totalPages}`;
+    document.getElementById('btnReportPrev').disabled = reportCurrentPage === 1;
+    document.getElementById('btnReportNext').disabled = reportCurrentPage === totalPages;
+    
+    const paginationControls = document.getElementById('reportPaginationControls');
+    
+    if (filteredReportTxs.length > 0) {
+      paginationControls.classList.remove('hidden');
+      paginationControls.classList.add('d-flex');
+    } else {
+      paginationControls.classList.add('hidden');
+      paginationControls.classList.remove('d-flex');
+      list.innerHTML = `<div class="col-12 text-center p-3 text-muted">No sales found in this date range.</div>`;
+      return;
+    }
+
+    const startIndex = (reportCurrentPage - 1) * reportItemsPerPage;
+    const paginatedTxs = filteredReportTxs.slice(startIndex, startIndex + reportItemsPerPage);
+    let reportHtml = '';
+    
+    paginatedTxs.forEach(tx => {
+      let safeDate = "No Date";
+      if (tx.Date) { safeDate = formatDateLocal(tx.Date); }
+
+      let details;
+      try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+      let items = Array.isArray(details) ? details : (details.items || []);
+      
+      let custName = details.customerName ? details.customerName : 'Walk-in';
+
+      let simpleCardListHtml = '<div class="my-2 p-2 flex-grow-1" style="background: #ffffff; border: 2px dashed #aaa; border-radius: 6px;">';
+      if(items.length > 0) {
+        items.forEach(item => {
+          simpleCardListHtml += `<div class="small fw-bold text-dark" style="font-family: 'Ubuntu', sans-serif;">▪ ${item.name} <span class="text-danger">(x${item.qty})</span></div>`;
+        });
+      } else {
+        simpleCardListHtml += `<div class="small text-muted">No items found</div>`;
+      }
+      simpleCardListHtml += '</div>';
+
+      reportHtml += `
+        <div class="col-md-6 col-12 mb-2 d-flex">
+          <div class="list-group-item bg-success bg-opacity-25 w-100 d-flex flex-column h-100 border border-success">
+            
+            <div class="d-flex w-100 justify-content-between align-items-center border-bottom border-success pb-2 mb-2">
+              <h6 class="mb-0 fw-bold text-truncate me-2" style="font-family: 'Ubuntu', sans-serif; font-size: 0.8rem;">Tx: ${tx.ID}</h6>
+              <span class="badge bg-dark">${safeDate}</span>
+            </div>
+            
+            <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+              <div>
+                <p class="mb-1 fw-bold fs-5 text-dark">Rp ${formatRupiah(tx.GrandTotal || 0)}</p>
+                <p class="mb-1 small">Cust: <strong class="text-primary">${custName}</strong></p>
+              </div>
+              <div class="text-end">
+                 <span class="text-uppercase border border-dark rounded px-2 bg-white small fw-bold text-success">${tx.SalesStatus}</span>
+              </div>
+            </div>
+            
+            ${simpleCardListHtml}
+            
+            <button class="btn btn-sm btn-info w-100 fw-bold mt-auto text-dark border-dark" onclick="openModal('${tx.ID}')" style="font-family: 'Ubuntu', sans-serif;">
+              🔍 VIEW DETAILS
+            </button>
+
+          </div>
+        </div>
+      `;
+    });
+    list.innerHTML = reportHtml;
+  }
+
+  function generatePriceReport() {
+    const priceMap = new Map();
+    const reversedTxs = allTransactions.slice().reverse();
+    
+    reversedTxs.forEach(tx => {
+      if (tx.SalesStatus === 'Paid' || tx.SalesStatus === 'Confirmed' || tx.SalesStatus === 'Deal') {
+        let safeDate = "No Date";
+        if (tx.Date) { safeDate = formatDateLocal(tx.Date); }
+
+        let details;
+        try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+        let items = Array.isArray(details) ? details : (details.items || []);
+        
+        items.forEach(item => {
+          if(!item.name) return;
+          const nameLower = item.name.trim().toLowerCase(); 
+          if(!priceMap.has(nameLower)) {
+            priceMap.set(nameLower, {
+              originalName: item.name,
+              price: item.price, 
+              date: safeDate
+            });
+          }
+        });
+      }
+    });
+    
+    allPriceData = Array.from(priceMap.values()).sort((a, b) => a.originalName.localeCompare(b.originalName));
+    priceCurrentPage = 1;
+    renderPricePage();
+  }
+
+  function filterPrices() {
+    priceCurrentPage = 1;
+    renderPricePage();
+  }
+
+  function changePricePage(delta) {
+    priceCurrentPage += delta;
+    renderPricePage();
+  }
+
+  function renderPricePage() {
+    const tbody = document.getElementById('priceTableBody');
+    tbody.innerHTML = '';
+    
+    const query = document.getElementById('priceSearch').value.toLowerCase();
+    
+    let filteredPrices = allPriceData;
+    if (query) {
+      filteredPrices = allPriceData.filter(card => card.originalName.toLowerCase().includes(query));
+    }
+
+    const totalPages = Math.ceil(filteredPrices.length / priceItemsPerPage) || 1;
+    if (priceCurrentPage > totalPages) priceCurrentPage = totalPages;
+    if (priceCurrentPage < 1) priceCurrentPage = 1;
+
+    document.getElementById('pricePageInfo').innerText = `Page ${priceCurrentPage} of ${totalPages}`;
+    document.getElementById('btnPricePrev').disabled = priceCurrentPage === 1;
+    document.getElementById('btnPriceNext').disabled = priceCurrentPage === totalPages;
+    
+    const paginationControls = document.getElementById('pricePaginationControls');
+    if(filteredPrices.length > 0) {
+      paginationControls.classList.remove('hidden');
+      paginationControls.classList.add('d-flex');
+    } else {
+      paginationControls.classList.add('hidden');
+      paginationControls.classList.remove('d-flex');
+      tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-muted">No pricing data found matching search.</td></tr>';
+      return;
+    }
+
+    const startIndex = (priceCurrentPage - 1) * priceItemsPerPage;
+    const paginatedPrices = filteredPrices.slice(startIndex, startIndex + priceItemsPerPage);
+    
+    paginatedPrices.forEach(card => {
+      tbody.innerHTML += `
+        <tr class="price-row">
+          <td class="fw-bold align-middle card-name-cell">${card.originalName}</td>
+          <td class="text-success fw-bold align-middle fs-5">Rp ${formatRupiah(card.price)}</td>
+          <td class="align-middle text-muted small">${card.date}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function toggleDetails(id) {
+    const el = document.getElementById(id);
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('txDetailModal').classList.add('hidden');
+  }
+
+  function openModal(id) {
+    const tx = allTransactions.find(t => t.ID === id);
+    if (!tx) return;
+    
+    let details;
+    try { details = JSON.parse(tx.CardDetails); } catch(e) { details = []; }
+    let items = Array.isArray(details) ? details : (details.items || []);
+    
+    let custName = details.customerName ? details.customerName : 'Walk-in';
+    let discountType = details.discountType || 'none';
+    let discountValue = details.discountValue || 0;
+    
+    let modalHtml = `<p class="mb-2 small text-dark"><span class="fw-bold text-muted">Customer:</span> <strong class="text-primary fs-6">${custName}</strong></p>`;
+    
+    modalHtml += '<div class="mb-3 p-2" style="background: #f8f9fa; border: 1px solid #ccc; border-radius: 6px;">';
+    let subtotal = 0;
+    if(items.length > 0) {
+      items.forEach(item => {
+        let price = Number(item.price) || 0;
+        let disc = Number(item.itemDiscount) || 0;
+        let effectivePrice = Math.max(0, price - disc);
+        let itemTotal = effectivePrice * item.qty;
+        subtotal += itemTotal;
+        
+        let discBadge = disc > 0 ? ` <span class="badge bg-warning text-dark ms-1">-Rp ${formatRupiah(disc)}/ea</span>` : '';
+        modalHtml += `
+          <div class="small text-dark mb-2" style="font-family: 'Ubuntu', sans-serif; border-bottom: 1px dashed #ddd; padding-bottom: 6px;">
+            <div class="fw-bold">▪ ${item.name}</div>
+            <div class="d-flex justify-content-between text-muted ms-2 mt-1">
+              <span>${item.qty} x Rp ${formatRupiah(price)}${discBadge}</span>
+              <span class="fw-bold text-dark">Rp ${formatRupiah(itemTotal)}</span>
+            </div>
+          </div>`;
+      });
+    } else {
+      modalHtml += `<div class="small text-muted">No items found</div>`;
+    }
+    
+    modalHtml += `
+        <div class="d-flex justify-content-between pt-2 border-top border-secondary fw-bold text-dark">
+          <span>Subtotal:</span>
+          <span>Rp ${formatRupiah(subtotal)}</span>
+        </div>
+    </div>`;
+
+    if (discountType !== 'none' && discountValue > 0) {
+      let discDisplay = discountType === 'percent' ? `${discountValue}%` : `Rp ${formatRupiah(discountValue)}`;
+      let remarks = details.discountRemarks ? ` <span class="text-muted">(${details.discountRemarks})</span>` : '';
+      modalHtml += `
+        <div class="small fw-bold text-danger mb-2 text-end">
+          Global Disc: -${discDisplay}${remarks}
+        </div>
+      `;
+    }
+
+    modalHtml += `
+      <h4 class="text-end mb-3 text-success border-bottom border-dark pb-2">Total: Rp ${formatRupiah(tx.GrandTotal || 0)}</h4>
+    `;
+
+    if (tx.ImageURL) {
+      modalHtml += `<a href="${tx.ImageURL}" target="_blank" class="btn btn-outline-dark w-100 fw-bold border-2"><span style="font-size: 1.2em;">📷</span> VIEW RECEIPT/PHOTO</a>`;
+    } else {
+      modalHtml += `<div class="text-muted small text-center mt-1 fst-italic">No photo attached</div>`;
+    }
+
+    document.getElementById('modalBody').innerHTML = modalHtml;
+    document.getElementById('txDetailModal').classList.remove('hidden');
+  }
+  let videoStream = null;
+let isOrbReady = false; // NEW: The main app will check this instead of the array length
+
+// --- 1. WEB WORKER SETUP (Moved up so it exists BEFORE the listener!) ---
+let cvWorker;
+const workerScript = `
+  importScripts('https://docs.opencv.org/4.8.0/opencv.js');
+  let parsedOrbDatabase = [];
+
+  function convertStringToDescriptor(descriptorString) {
+    if (!descriptorString || !descriptorString.includes('|')) return null;
+    try {
+      let parts = descriptorString.split('|');
+      let dims = parts[0].split(',');
+      let rows = parseInt(dims[0]), cols = parseInt(dims[1]), type = parseInt(dims[2]);
+      let binary = atob(parts[1]);
+      let data = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) data[i] = binary.charCodeAt(i);
+      let mat = new cv.Mat(rows, cols, type);
+      mat.data.set(data);
+      return mat;
+    } catch (e) { return null; }
+  }
+
+  self.onmessage = function(e) {
+    const data = e.data;
+    if (data.type === 'initDatabase') {
+      if (typeof cv === 'undefined' || !cv.Mat) {
+        setTimeout(() => self.onmessage(e), 500);
+        return;
+      }
+      parsedOrbDatabase = [];
+      data.rawDb.forEach(card => {
+        let des = convertStringToDescriptor(card.orbCode);
+        if (des && !des.empty()) {
+          parsedOrbDatabase.push({
+            id: card.id, name: card.name, rarity: card.rarity, 
+            setCode: card.setCode, descriptors: des
+          });
+        }
+      });
+      postMessage({ type: 'databaseReady', count: parsedOrbDatabase.length });
+    }
+    else if (data.type === 'processFrame') {
+      try {
+        let src = cv.matFromImageData(data.imageData);
+        let gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+        let orb = new cv.ORB(500); 
+        let kp = new cv.KeyPointVector();
+        let liveDes = new cv.Mat();
+        orb.detectAndCompute(gray, new cv.Mat(), kp, liveDes);
+
+        let bestMatch = null;
+        let maxGoodMatches = 0;
+
+        if (!liveDes.empty()) {
+          let bf = new cv.BFMatcher(cv.NORM_HAMMING, true);
+          for (let i = 0; i < parsedOrbDatabase.length; i++) {
+            let dbItem = parsedOrbDatabase[i];
+            let matches = new cv.DMatchVector();
+            try {
+              bf.match(liveDes, dbItem.descriptors, matches);
+              let goodMatches = 0;
+              for (let j = 0; j < matches.size(); j++) {
+                if (matches.get(j).distance < 50) goodMatches++;
+              }
+              if (goodMatches > maxGoodMatches) {
+                maxGoodMatches = goodMatches;
+                bestMatch = { id: dbItem.id, name: dbItem.name, rarity: dbItem.rarity, setCode: dbItem.setCode };
+              }
+            } catch(err) {}
+            matches.delete();
+          }
+          bf.delete();
+        }
+        src.delete(); gray.delete(); orb.delete(); kp.delete(); liveDes.delete();
+        if (bestMatch && maxGoodMatches > 15) {
+          postMessage({ type: 'matchResult', match: bestMatch });
+        } else {
+          postMessage({ type: 'matchResult', match: null });
+        }
+      } catch (err) {
+        postMessage({ type: 'error', error: err.toString() });
+      }
+    }
+  };
+`;
+const blob = new Blob([workerScript], { type: 'application/javascript' });
+cvWorker = new Worker(URL.createObjectURL(blob));
+
+// --- 2. MAIN APP LISTENER ---
+cvWorker.onmessage = function(e) {
+  const data = e.data;
+  
+  if (data.type === 'databaseReady') {
+    console.log(`Worker Ready! Loaded ${data.count} cards.`);
+    isOrbReady = true; // Tell the main app the background worker is locked and loaded
+    
+    const dbStatus = document.getElementById('db-status');
+    const capBtn = document.getElementById('capture-btn');
+    if (dbStatus) {
+      dbStatus.className = "badge bg-success border border-light";
+      dbStatus.innerText = "DB: READY";
+    }
+    if (capBtn) capBtn.disabled = false;
+  } 
+  
+  else if (data.type === 'matchResult') {
+    if (data.match) {
+      matchedResults.push(data.match);
+    }
+    updateScannerCounters();
+    setTimeout(processQueueLoop, 50); 
+  }
+};
+
+// 1. Download ORB data and feed the Worker
+async function loadOrbDatabase() {
+  const statusMsg = document.getElementById('scan-status');
+  const dbStatus = document.getElementById('db-status');
+  
+  try {
+    let localData = await getOrbFromLocal();
+    
+    if (localData && localData.length > 0) {
+      if(statusMsg) statusMsg.innerText = "Sending local data to Background Worker...";
+      // Send raw data to the worker to parse
+      cvWorker.postMessage({ type: 'initDatabase', rawDb: localData });
+      return; 
+    }
+
+    if(statusMsg) statusMsg.innerText = "Downloading database from cloud...";
+    if(dbStatus) dbStatus.innerText = "DB: DOWNLOADING";
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: "getGlobalOrbData" })
+    });
+    const res = await response.json();
+    
+    if (res.success && res.orbDatabase && res.orbDatabase[0].id !== "ERROR") {
+      await saveOrbToLocal(res.orbDatabase);
+      
+      // Send raw data to the worker to parse
+      cvWorker.postMessage({ type: 'initDatabase', rawDb: res.orbDatabase });
+    }
+  } catch (err) {
+    if(statusMsg) statusMsg.innerText = "Storage or Network Error.";
+  }
+}
+
+// 2. Convert text to OpenCV Matrices
+function parseOrbImages(rawDb) {
+  parsedOrbDatabase = [];
+  if (typeof cv === 'undefined' || !cv.Mat) {
+    setTimeout(() => parseOrbImages(rawDb), 1000); // Wait for OpenCV to load
+    return;
+  }
+  
+  rawDb.forEach(card => {
+    let des = convertStringToDescriptor(card.orbCode);
+    if (des && !des.empty()) {
+      parsedOrbDatabase.push({
+        id: card.id, name: card.name, rarity: card.rarity, 
+        setCode: card.setCode, descriptors: des
+      });
+    }
+  });
+ console.log(`ORB Ready! Loaded ${parsedOrbDatabase.length} cards.`);
+  
+  // --- NEW: UPDATE UI TO GREEN WHEN READY ---
+  const dbStatus = document.getElementById('db-status');
+  const capBtn = document.getElementById('capture-btn');
+  if (dbStatus) {
+    dbStatus.className = "badge bg-success border border-light";
+    dbStatus.innerText = "DB: READY";
+  }
+  if (capBtn) capBtn.disabled = false;
+  // ------------------------------------------
+}
+
+function convertStringToDescriptor(descriptorString) {
+  if (!descriptorString || !descriptorString.includes('|')) return null;
+  try {
+    let parts = descriptorString.split('|');
+    let dims = parts[0].split(',');
+    let rows = parseInt(dims[0]), cols = parseInt(dims[1]), type = parseInt(dims[2]);
+    let binary = atob(parts[1]);
+    let data = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) data[i] = binary.charCodeAt(i);
+    
+    let mat = new cv.Mat(rows, cols, type);
+    mat.data.set(data);
+    return mat;
+  } catch (e) { return null; }
+}
+
+// 3. Camera Controls
+async function openScanner() {
+  scanQueue = [];
+  matchedResults = [];
+  isProcessingQueue = false;
+  isFinishing = false;
+  updateScannerCounters();
+  
+  const capBtn = document.getElementById('capture-btn');
+  const dbStatus = document.getElementById('db-status');
+  
+  // Set Red/Green indicator based on whether DB is loaded
+  if (!isOrbReady) {
+    dbStatus.className = "badge bg-danger border border-light";
+    dbStatus.innerText = "DB: LOADING";
+    capBtn.disabled = true;
+  } else {
+    dbStatus.className = "badge bg-success border border-light";
+    dbStatus.innerText = "DB: READY";
+    capBtn.disabled = false;
+  }
+  
+  document.getElementById('done-btn').disabled = false;
+  document.getElementById('done-btn').innerHTML = "✅ DONE";
+  document.getElementById('scannerContainer').classList.remove('hidden');
+  document.getElementById('scan-status').innerText = "Starting camera...";
+  
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment', width: { ideal: 1280 } } 
+    });
+    const video = document.getElementById('camera-stream');
+    video.srcObject = videoStream;
+    document.getElementById('scan-status').innerText = "Align ONE card and tap Capture!";
+  } catch (err) {
+    document.getElementById('scan-status').innerText = "Camera access denied.";
+  }
+}
+
+function closeScanner() {
+  document.getElementById('scannerContainer').classList.add('hidden');
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+}
+
+// 4. Capture & Process ORB
+// --- QUEUE SYSTEM VARIABLES ---
+let scanQueue = [];
+let matchedResults = [];
+let isProcessingQueue = false;
+let isFinishing = false;
+
+// 1. Triggered by the 📸 CAPTURE button
+function captureToQueue() {
+  if (!isOrbReady) {
+    alert("ORB Database still loading!");
+    return;
+  }
+
+  const video = document.getElementById('camera-stream');
+  const canvas = document.getElementById('snapshot-canvas');
+  const statusMsg = document.getElementById('scan-status');
+
+  // --- 1. INSTANT FLASH ---
+  const flash = document.getElementById('flash-overlay');
+  if (flash) {
+    flash.style.transition = 'none'; 
+    flash.style.opacity = '1';       
+    void flash.offsetWidth;          
+    flash.style.transition = 'opacity 0.15s ease-out'; 
+    flash.style.opacity = '0';       
+  }
+
+  // --- 2. GRAB IMAGE INSTANTLY ---
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  scanQueue.push(imageData);
+  updateScannerCounters();
+  
+  // --- 3. UI FEEDBACK ---
+  statusMsg.innerText = `Snap! Queue: ${scanQueue.length}. Processing in background...`;
+  statusMsg.classList.replace('text-warning', 'text-info');
+
+  // Restore the warning text quickly so you know to snap the next card
+  setTimeout(() => {
+    if (!isFinishing) {
+      statusMsg.innerText = "Align next card and tap Capture!";
+      statusMsg.classList.replace('text-info', 'text-warning');
+    }
+  }, 400);
+
+  // --- 4. START INSTANT PROCESSING ---
+  // If the worker is resting, wake it up. 
+  // If it's already working, it will naturally grab this new image when it finishes its current one.
+  if (!isProcessingQueue) {
+    isProcessingQueue = true; 
+    processQueueLoop();
+  } 
+}
+
+// 2. The Background Loop (Delegates to the Web Worker)
+function processQueueLoop() {
+  if (scanQueue.length === 0) {
+    isProcessingQueue = false;
+    if (isFinishing) finalizeMatches();
+    return;
+  }
+
+  // Grab the frame
+  const imageData = scanQueue.shift(); 
+  updateScannerCounters();
+
+  // Send it to the worker. 
+  // We do NOT call processQueueLoop() again here. 
+  // We wait for the worker to reply via cvWorker.onmessage before continuing.
+  cvWorker.postMessage({ type: 'processFrame', imageData: imageData });
+}
+// 4. Triggered by the ✅ DONE button
+function finishScanning() {
+  isFinishing = true;
+  document.getElementById('capture-btn').disabled = true;
+  document.getElementById('done-btn').disabled = true;
+  document.getElementById('done-btn').innerHTML = "⏳ WAIT..."; 
+
+  // --- NEW: KILL CAMERA HARDWARE INSTANTLY TO SAVE BATTERY ---
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop()); // Turn off the physical camera
+    videoStream = null; // Clear the variable
+    document.getElementById('camera-stream').srcObject = null; // Make the video box go black
+  }
+  // ----------------------------------------------------------
+
+  // If the worker is still chewing through a backlog, just update the text and wait.
+  if (scanQueue.length > 0 || isProcessingQueue) {
+    document.getElementById('scan-status').innerText = "Finishing background processing... please wait.";
+    document.getElementById('scan-status').className = "text-info fw-bold my-2 small";
+  } else {
+    // If the queue is already empty, finalize immediately!
+    finalizeMatches();
+  }
+}
+
+// 5. Applies everything to the cart and closes
+function finalizeMatches() {
+  let count = matchedResults.length;
+  
+  // Run your existing cart function for each match
+  matchedResults.forEach(match => addScannedCardToCart(match));
+  
+  closeScanner();
+  
+  if (count > 0) {
+    alert(`Added ${count} card(s) to the transaction!`);
+  } else {
+    alert("No cards were recognized.");
+  }
+}
+
+function updateScannerCounters() {
+  document.getElementById('queue-count').innerText = `Queue: ${scanQueue.length}`;
+  document.getElementById('match-count').innerText = `Matched: ${matchedResults.length}`;
+}
+
+// 5. Format & Auto-Fill into Sales App Cart
+const IGNORED_RARITIES = ["C", "U", "R"]; 
+
+function addScannedCardToCart(match) {
+  // Format Name: Name + Rarity (if high) + (Set)
+  let formattedName = match.name.trim();
+  if (match.rarity && !IGNORED_RARITIES.includes(match.rarity.toUpperCase())) {
+    formattedName += ` ${match.rarity.toUpperCase()}`;
+  }
+  formattedName += ` (${match.setCode.toUpperCase()})`;
+  
+  const nameLower = formattedName.toLowerCase();
+  
+  // CHECK IF CARD ALREADY EXISTS IN CART
+  let existingCard = cards.find(c => c.name.toLowerCase() === nameLower);
+
+  if (existingCard) {
+    // CARD EXISTS: Increase Qty and update totals
+    existingCard.qty += 1;
+    let p = Number(existingCard.price) || 0;
+    let d = Number(existingCard.itemDiscount) || 0;
+    existingCard.total = Math.max(0, p - d) * existingCard.qty;
+
+    // Fix: Safely find the row first, then find the input inside it
+    const rowDiv = document.getElementById(`row_${existingCard.id}`);
+    if (rowDiv) {
+      const rowQtyInput = rowDiv.querySelector('input[type="number"]');
+      if (rowQtyInput) rowQtyInput.value = existingCard.qty;
+    }
+    
+    const rowTotalDisplay = document.getElementById(`total_${existingCard.id}`);
+    if (rowTotalDisplay) rowTotalDisplay.innerText = formatRupiah(existingCard.total);
+    
+    calculateGrandTotal();
+  } else {
+    // NEW CARD: Add to cart normally
+    const foundPrice = latestPrices[nameLower] !== undefined ? latestPrices[nameLower] : '';
+    
+    // Fix: Clean integer ID
+    const safeId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+    
+    const card = { 
+      id: safeId, 
+      name: formattedName, 
+      price: foundPrice, 
+      qty: 1, 
+      itemDiscount: 0, 
+      total: foundPrice === '' ? 0 : foundPrice * 1 
+    };
+    
+    cards.push(card);
+    buildRowHTML(card);
+    calculateGrandTotal();
+  }
+}
+  // --- INDEXEDDB HELPER FUNCTIONS ---
+const DB_NAME = 'PokemonSalesDB';
+const STORE_NAME = 'OrbDatabase';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveOrbToLocal(orbDataArray) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    
+    // Clear old data first, then add the new batch
+    store.clear(); 
+    orbDataArray.forEach(card => store.put(card));
+    
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+async function getOrbFromLocal() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+</script>
+</body>
+</html>
