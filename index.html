@@ -1359,7 +1359,9 @@ let isOrbReady = false; // NEW: The main app will check this instead of the arra
 let cvWorker;
 const workerScript = `
   importScripts('https://docs.opencv.org/4.8.0/opencv.js');
-  let parsedOrbDatabase = [];
+
+  let globalDescriptors = null;
+  let cardBoundaries = []; // This will map the rows in the skyscraper back to the original cards
 
   function convertStringToDescriptor(descriptorString) {
     if (!descriptorString || !descriptorString.includes('|')) return null;
@@ -1378,58 +1380,99 @@ const workerScript = `
 
   self.onmessage = function(e) {
     const data = e.data;
+    
+    // --- 1. BUILD THE SKYSCRAPER MATRIX ---
     if (data.type === 'initDatabase') {
       if (typeof cv === 'undefined' || !cv.Mat) {
         setTimeout(() => self.onmessage(e), 500);
         return;
       }
-      parsedOrbDatabase = [];
+      
+      let vec = new cv.MatVector();
+      let currentRow = 0;
+      cardBoundaries = [];
+
       data.rawDb.forEach(card => {
         let des = convertStringToDescriptor(card.orbCode);
         if (des && !des.empty()) {
-          parsedOrbDatabase.push({
-            id: card.id, name: card.name, rarity: card.rarity, 
-            setCode: card.setCode, descriptors: des
+          // Record which rows belong to this specific card
+          cardBoundaries.push({
+            start: currentRow,
+            end: currentRow + des.rows,
+            card: { id: card.id, name: card.name, rarity: card.rarity, setCode: card.setCode }
           });
+          currentRow += des.rows;
+          vec.push_back(des);
         }
       });
-      postMessage({ type: 'databaseReady', count: parsedOrbDatabase.length });
+
+      // Glue them all together into one giant block
+      if (currentRow > 0) {
+        if (globalDescriptors !== null) globalDescriptors.delete();
+        globalDescriptors = new cv.Mat();
+        cv.vconcat(vec, globalDescriptors);
+      }
+      vec.delete();
+
+      postMessage({ type: 'databaseReady', count: cardBoundaries.length });
     }
+    
+    // --- 2. VECTORIZED MATCHING ---
     else if (data.type === 'processFrame') {
       try {
         let src = cv.matFromImageData(data.imageData);
         let gray = new cv.Mat();
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+        
         let orb = new cv.ORB(500); 
         let kp = new cv.KeyPointVector();
         let liveDes = new cv.Mat();
         orb.detectAndCompute(gray, new cv.Mat(), kp, liveDes);
 
         let bestMatch = null;
-        let maxGoodMatches = 0;
+        let maxVotes = 0;
 
-        if (!liveDes.empty()) {
+        if (!liveDes.empty() && globalDescriptors !== null) {
           let bf = new cv.BFMatcher(cv.NORM_HAMMING, true);
-          for (let i = 0; i < parsedOrbDatabase.length; i++) {
-            let dbItem = parsedOrbDatabase[i];
-            let matches = new cv.DMatchVector();
-            try {
-              bf.match(liveDes, dbItem.descriptors, matches);
-              let goodMatches = 0;
-              for (let j = 0; j < matches.size(); j++) {
-                if (matches.get(j).distance < 50) goodMatches++;
+          let matches = new cv.DMatchVector();
+
+          // WE ONLY DO THE HEAVY C++ MATH EXACTLY ONCE!
+          bf.match(liveDes, globalDescriptors, matches);
+
+          // Create a tally sheet for the votes
+          let voteCounts = new Array(cardBoundaries.length).fill(0);
+
+          for (let i = 0; i < matches.size(); i++) {
+            let match = matches.get(i);
+            if (match.distance < 50) {
+              let row = match.trainIdx;
+              
+              // Find which card owns this winning row and add 1 vote
+              for (let c = 0; c < cardBoundaries.length; c++) {
+                if (row >= cardBoundaries[c].start && row < cardBoundaries[c].end) {
+                  voteCounts[c]++;
+                  break;
+                }
               }
-              if (goodMatches > maxGoodMatches) {
-                maxGoodMatches = goodMatches;
-                bestMatch = { id: dbItem.id, name: dbItem.name, rarity: dbItem.rarity, setCode: dbItem.setCode };
-              }
-            } catch(err) {}
-            matches.delete();
+            }
           }
-          bf.delete();
+
+          // Count the votes to find the winner
+          for (let c = 0; c < voteCounts.length; c++) {
+            if (voteCounts[c] > maxVotes) {
+              maxVotes = voteCounts[c];
+              bestMatch = cardBoundaries[c].card;
+            }
+          }
+
+          bf.delete(); matches.delete();
         }
+        
         src.delete(); gray.delete(); orb.delete(); kp.delete(); liveDes.delete();
-        if (bestMatch && maxGoodMatches > 15) {
+        
+        // Note: Global Matching is much stricter and naturally eliminates false positives, 
+        // so we can safely lower the required threshold to 10.
+        if (bestMatch && maxVotes >= 10) {
           postMessage({ type: 'matchResult', match: bestMatch });
         } else {
           postMessage({ type: 'matchResult', match: null });
