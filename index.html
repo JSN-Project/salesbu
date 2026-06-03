@@ -1494,6 +1494,8 @@ const workerScript = `
         postMessage({ type: 'error', error: err.toString() });
       }
     }
+    };
+    `;
 const blob = new Blob([workerScript], { type: 'application/javascript' });
 cvWorker = new Worker(URL.createObjectURL(blob));
 
