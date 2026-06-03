@@ -1360,8 +1360,9 @@ let cvWorker;
 const workerScript = `
   importScripts('https://docs.opencv.org/4.8.0/opencv.js');
 
+  let parsedOrbDatabase = [];
   let globalDescriptors = null;
-  let cardBoundaries = []; // This will map the rows in the skyscraper back to the original cards
+  let cardBoundaries = []; 
 
   function convertStringToDescriptor(descriptorString) {
     if (!descriptorString || !descriptorString.includes('|')) return null;
@@ -1381,13 +1382,18 @@ const workerScript = `
   self.onmessage = function(e) {
     const data = e.data;
     
-    // --- 1. BUILD THE SKYSCRAPER MATRIX ---
     if (data.type === 'initDatabase') {
       if (typeof cv === 'undefined' || !cv.Mat) {
         setTimeout(() => self.onmessage(e), 500);
         return;
       }
       
+      // Clean up old memory if re-initializing
+      if (parsedOrbDatabase.length > 0) {
+        parsedOrbDatabase.forEach(item => item.descriptors.delete());
+      }
+      
+      parsedOrbDatabase = [];
       let vec = new cv.MatVector();
       let currentRow = 0;
       cardBoundaries = [];
@@ -1395,18 +1401,14 @@ const workerScript = `
       data.rawDb.forEach(card => {
         let des = convertStringToDescriptor(card.orbCode);
         if (des && !des.empty()) {
-          // Record which rows belong to this specific card
-          cardBoundaries.push({
-            start: currentRow,
-            end: currentRow + des.rows,
-            card: { id: card.id, name: card.name, rarity: card.rarity, setCode: card.setCode }
-          });
+          let cardObj = { id: card.id, name: card.name, rarity: card.rarity, setCode: card.setCode };
+          parsedOrbDatabase.push({ card: cardObj, descriptors: des });
+          cardBoundaries.push({ start: currentRow, end: currentRow + des.rows, index: parsedOrbDatabase.length - 1 });
           currentRow += des.rows;
           vec.push_back(des);
         }
       });
 
-      // Glue them all together into one giant block
       if (currentRow > 0) {
         if (globalDescriptors !== null) globalDescriptors.delete();
         globalDescriptors = new cv.Mat();
@@ -1414,79 +1416,100 @@ const workerScript = `
       }
       vec.delete();
 
-      postMessage({ type: 'databaseReady', count: cardBoundaries.length });
+      postMessage({ type: 'databaseReady', count: parsedOrbDatabase.length });
     }
     
-    // --- 2. VECTORIZED KNN MATCHING (High Accuracy) ---
     else if (data.type === 'processFrame') {
       try {
         let src = cv.matFromImageData(data.imageData);
         let gray = new cv.Mat();
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
         
-        // 1. Extract MORE features to give us better data (1000 instead of 500)
-        let orb = new cv.ORB(1000); 
+        let orb = new cv.ORB(500); 
         let kp = new cv.KeyPointVector();
         let liveDes = new cv.Mat();
         orb.detectAndCompute(gray, new cv.Mat(), kp, liveDes);
 
-        let bestMatch = null;
-        let maxVotes = 0;
+        let finalBestMatch = null;
 
         if (!liveDes.empty() && globalDescriptors !== null) {
-          // 2. CrossCheck MUST be false for KNN matching to work
-          let bf = new cv.BFMatcher(cv.NORM_HAMMING, false);
           
-          // Notice we use DMatchVectorVector here for multiple results
-          let matches = new cv.DMatchVectorVector(); 
+          // --- STAGE 1: FAST SKYSCRAPER PRE-FILTER ---
+          let bf = new cv.BFMatcher(cv.NORM_HAMMING, false);
+          let matches = new cv.DMatchVector();
+          bf.match(liveDes, globalDescriptors, matches);
 
-          // 3. Find the TOP 2 matches for every single point (K=2)
-          bf.knnMatch(liveDes, globalDescriptors, matches, 2);
+          let voteCounts = new Array(parsedOrbDatabase.length).fill(0);
 
-          let voteCounts = new Array(cardBoundaries.length).fill(0);
-
-          // 4. LOWE'S RATIO TEST
           for (let i = 0; i < matches.size(); i++) {
-            let matchPair = matches.get(i);
-            
-            // Make sure OpenCV actually found 2 matches to compare
-            if (matchPair.size() >= 2) {
-              let m1 = matchPair.get(0); // Best match
-              let m2 = matchPair.get(1); // Second best match
-
-              // If the best match is significantly closer (80% ratio) than the second best...
-              // It's a unique feature! Keep it.
-              if (m1.distance < 0.80 * m2.distance) {
-                let row = m1.trainIdx;
-                
-                // Find which card owns this winning row
-                for (let c = 0; c < cardBoundaries.length; c++) {
-                  if (row >= cardBoundaries[c].start && row < cardBoundaries[c].end) {
-                    voteCounts[c]++;
-                    break;
+            let match = matches.get(i);
+            if (match.distance < 50) { 
+              let row = match.trainIdx;
+              
+              // Binary search to find which card this row belongs to
+              let low = 0;
+              let high = cardBoundaries.length - 1;
+              while (low <= high) {
+                  let mid = Math.floor((low + high) / 2);
+                  if (row >= cardBoundaries[mid].end) {
+                      low = mid + 1;
+                  } else if (row < cardBoundaries[mid].start) {
+                      high = mid - 1;
+                  } else {
+                      voteCounts[cardBoundaries[mid].index]++;
+                      break;
                   }
-                }
               }
             }
           }
-
-          // Count the remaining high-quality votes to find the winner
-          for (let c = 0; c < voteCounts.length; c++) {
-            if (voteCounts[c] > maxVotes) {
-              maxVotes = voteCounts[c];
-              bestMatch = cardBoundaries[c].card;
-            }
-          }
-
           bf.delete(); matches.delete();
+
+          // Get Top 5 Candidates
+          let candidates = [];
+          for (let c = 0; c < voteCounts.length; c++) {
+             if(voteCounts[c] > 0) {
+                 candidates.push({ index: c, votes: voteCounts[c] });
+             }
+          }
+          candidates.sort((a, b) => b.votes - a.votes);
+          let topCandidates = candidates.slice(0, 5);
+
+          // --- STAGE 2: HIGH-ACCURACY 1-on-1 CROSS-CHECK ---
+          if (topCandidates.length > 0) {
+              let bf2 = new cv.BFMatcher(cv.NORM_HAMMING, true); // true = CrossCheck enabled!
+              let maxGoodMatches = 0;
+
+              for (let i = 0; i < topCandidates.length; i++) {
+                  let cand = topCandidates[i];
+                  let dbItem = parsedOrbDatabase[cand.index];
+                  let matches2 = new cv.DMatchVector();
+                  
+                  try {
+                      bf2.match(liveDes, dbItem.descriptors, matches2);
+                      let goodMatches = 0;
+                      for (let j = 0; j < matches2.size(); j++) {
+                          if (matches2.get(j).distance < 50) goodMatches++;
+                      }
+                      if (goodMatches > maxGoodMatches) {
+                          maxGoodMatches = goodMatches;
+                          finalBestMatch = dbItem.card;
+                      }
+                  } catch(e) {}
+                  matches2.delete();
+              }
+              bf2.delete();
+              
+              // Only accept if it meets our strict threshold of 15 matching points
+              if (maxGoodMatches < 15) {
+                  finalBestMatch = null;
+              }
+          }
         }
         
         src.delete(); gray.delete(); orb.delete(); kp.delete(); liveDes.delete();
         
-        // 5. Because we filtered out all the junk, a card only needs 
-        // 8 highly unique matching points to be considered a guaranteed hit!
-        if (bestMatch && maxVotes >= 8) {
-          postMessage({ type: 'matchResult', match: bestMatch });
+        if (finalBestMatch) {
+          postMessage({ type: 'matchResult', match: finalBestMatch });
         } else {
           postMessage({ type: 'matchResult', match: null });
         }
@@ -1494,8 +1517,8 @@ const workerScript = `
         postMessage({ type: 'error', error: err.toString() });
       }
     }
-    };
-    `;
+  };
+`;
 const blob = new Blob([workerScript], { type: 'application/javascript' });
 cvWorker = new Worker(URL.createObjectURL(blob));
 
