@@ -1417,14 +1417,15 @@ const workerScript = `
       postMessage({ type: 'databaseReady', count: cardBoundaries.length });
     }
     
-    // --- 2. VECTORIZED MATCHING ---
+    // --- 2. VECTORIZED KNN MATCHING (High Accuracy) ---
     else if (data.type === 'processFrame') {
       try {
         let src = cv.matFromImageData(data.imageData);
         let gray = new cv.Mat();
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
         
-        let orb = new cv.ORB(500); 
+        // 1. Extract MORE features to give us better data (1000 instead of 500)
+        let orb = new cv.ORB(1000); 
         let kp = new cv.KeyPointVector();
         let liveDes = new cv.Mat();
         orb.detectAndCompute(gray, new cv.Mat(), kp, liveDes);
@@ -1433,31 +1434,43 @@ const workerScript = `
         let maxVotes = 0;
 
         if (!liveDes.empty() && globalDescriptors !== null) {
-          let bf = new cv.BFMatcher(cv.NORM_HAMMING, true);
-          let matches = new cv.DMatchVector();
+          // 2. CrossCheck MUST be false for KNN matching to work
+          let bf = new cv.BFMatcher(cv.NORM_HAMMING, false);
+          
+          // Notice we use DMatchVectorVector here for multiple results
+          let matches = new cv.DMatchVectorVector(); 
 
-          // WE ONLY DO THE HEAVY C++ MATH EXACTLY ONCE!
-          bf.match(liveDes, globalDescriptors, matches);
+          // 3. Find the TOP 2 matches for every single point (K=2)
+          bf.knnMatch(liveDes, globalDescriptors, matches, 2);
 
-          // Create a tally sheet for the votes
           let voteCounts = new Array(cardBoundaries.length).fill(0);
 
+          // 4. LOWE'S RATIO TEST
           for (let i = 0; i < matches.size(); i++) {
-            let match = matches.get(i);
-            if (match.distance < 50) {
-              let row = match.trainIdx;
-              
-              // Find which card owns this winning row and add 1 vote
-              for (let c = 0; c < cardBoundaries.length; c++) {
-                if (row >= cardBoundaries[c].start && row < cardBoundaries[c].end) {
-                  voteCounts[c]++;
-                  break;
+            let matchPair = matches.get(i);
+            
+            // Make sure OpenCV actually found 2 matches to compare
+            if (matchPair.size() >= 2) {
+              let m1 = matchPair.get(0); // Best match
+              let m2 = matchPair.get(1); // Second best match
+
+              // If the best match is significantly closer (80% ratio) than the second best...
+              // It's a unique feature! Keep it.
+              if (m1.distance < 0.80 * m2.distance) {
+                let row = m1.trainIdx;
+                
+                // Find which card owns this winning row
+                for (let c = 0; c < cardBoundaries.length; c++) {
+                  if (row >= cardBoundaries[c].start && row < cardBoundaries[c].end) {
+                    voteCounts[c]++;
+                    break;
+                  }
                 }
               }
             }
           }
 
-          // Count the votes to find the winner
+          // Count the remaining high-quality votes to find the winner
           for (let c = 0; c < voteCounts.length; c++) {
             if (voteCounts[c] > maxVotes) {
               maxVotes = voteCounts[c];
@@ -1470,9 +1483,9 @@ const workerScript = `
         
         src.delete(); gray.delete(); orb.delete(); kp.delete(); liveDes.delete();
         
-        // Note: Global Matching is much stricter and naturally eliminates false positives, 
-        // so we can safely lower the required threshold to 10.
-        if (bestMatch && maxVotes >= 10) {
+        // 5. Because we filtered out all the junk, a card only needs 
+        // 8 highly unique matching points to be considered a guaranteed hit!
+        if (bestMatch && maxVotes >= 8) {
           postMessage({ type: 'matchResult', match: bestMatch });
         } else {
           postMessage({ type: 'matchResult', match: null });
@@ -1481,8 +1494,6 @@ const workerScript = `
         postMessage({ type: 'error', error: err.toString() });
       }
     }
-  };
-`;
 const blob = new Blob([workerScript], { type: 'application/javascript' });
 cvWorker = new Worker(URL.createObjectURL(blob));
 
